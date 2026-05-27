@@ -3,7 +3,6 @@ const morgan = require("morgan");
 
 const app = express();
 
-// Morgan middleware
 app.use(morgan("dev"));
 
 // Routes
