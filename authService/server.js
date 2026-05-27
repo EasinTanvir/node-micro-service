@@ -7,12 +7,9 @@ app.use(morgan("dev"));
 app.get("/", (req, res) => {
   res.send("Server is running on port 3000");
 });
+
 app.get("/api/auth/user/all", (req, res) => {
   res.send("all users");
-});
-
-app.get("/about", (req, res) => {
-  res.send("About page");
 });
 
 // Start server
