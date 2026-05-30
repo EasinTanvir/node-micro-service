@@ -4,6 +4,7 @@ const app = express();
 app.use(morgan("dev"));
 
 // Routes
+
 app.get("/", (req, res) => {
   res.send("Server is running on port 3000");
 });
