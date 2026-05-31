@@ -17,8 +17,8 @@ spec:
 
     spec:
       containers:
-        - name: client
-          image: client
+        - name: client-service
+          image: client-service
           imagePullPolicy: Never
 
           ports:
@@ -35,7 +35,7 @@ spec:
     app: client-service
 
   ports:
-    - name: client
+    - name: client-service
       protocol: TCP
       port: 3000
       targetPort: 3000

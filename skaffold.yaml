@@ -20,7 +20,7 @@ build:
           - src: "**/*.js"
             dest: .
 
-    - image: client
+    - image: client-service
       context: client
 
       docker:
