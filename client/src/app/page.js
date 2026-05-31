@@ -6,7 +6,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("https://ticketing.dev/api/auth/user/all");
+        const response = await fetch("/api/auth/user/all");
 
         const data = await response.json();
 
@@ -19,7 +19,7 @@ const HomePage = () => {
     fetchUsers();
   }, []);
 
-  return <div>HomePage</div>;
+  return <div>HomePages</div>;
 };
 
 export default HomePage;

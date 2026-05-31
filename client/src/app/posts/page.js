@@ -1,23 +1,26 @@
-import React from "react";
+import axios from "axios";
+
+export const dynamic = "force-dynamic";
 
 const PostPage = async () => {
   try {
-    const response = await fetch("http://ticketing.dev/api/auth/user/all", {
-      cache: "no-store",
-    });
+    const response = await axios.get(
+      "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/auth/user/all",
+      {
+        headers: {
+          Host: "ticketing.dev",
+        },
+      },
+    );
 
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
-    }
-
-    const users = await response.json();
-
-    console.log(users);
+    console.log("all users", response.data);
   } catch (error) {
-    console.error("Failed to fetch users:", error);
+    console.error(error);
   }
 
-  return <div>Post Page</div>;
+  console.log("hello bro");
+
+  return <div>Post</div>;
 };
 
 export default PostPage;
