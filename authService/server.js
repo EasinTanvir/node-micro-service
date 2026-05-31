@@ -1,7 +1,19 @@
 const express = require("express");
 const morgan = require("morgan");
+const mongoose = require("mongoose");
+
 const app = express();
+
 app.use(morgan("dev"));
+
+mongoose
+  .connect("mongodb://mongo-service:27017/auth")
+  .then(() => {
+    console.log("MongoDB Connected");
+  })
+  .catch((err) => {
+    console.error("MongoDB Connection Error:", err);
+  });
 
 // Routes
 
