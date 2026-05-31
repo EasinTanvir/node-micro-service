@@ -6,7 +6,7 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-const JWT_SECRET = "mysecretkey";
+const JWT_SECRET = process.env.JWT_KEY;
 
 router.get("/users", async (req, res) => {
   res.json({ message: "connection section" });
