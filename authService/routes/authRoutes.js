@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const protectRoute = require("../middlewares/protectRoute");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
@@ -12,26 +13,20 @@ router.get("/users", async (req, res) => {
   res.json({ message: "connection section" });
 });
 
-router.get("/user/all", async (req, res) => {
-  const users = await User.find();
-
-  res.json(users);
-});
-
-router.get("/current-user", async (req, res) => {
+router.get("/current-user", protectRoute, async (req, res) => {
   try {
-    const token = req.cookies.jwt;
+    // const token = req.cookies.jwt;
 
-    if (!token) {
-      return res.status(401).json({
-        user: null,
-      });
-    }
+    // if (!token) {
+    //   return res.status(401).json({
+    //     user: null,
+    //   });
+    // }
 
-    const payload = jwt.verify(token, JWT_SECRET);
+    // const payload = jwt.verify(token, JWT_SECRET);
 
     res.json({
-      user: payload,
+      user: req.user.id,
     });
   } catch {
     res.status(401).json({
