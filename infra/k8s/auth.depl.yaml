@@ -31,6 +31,9 @@ spec:
                   name: jwt-secret
                   key: JWT_KEY
 
+            - name: MONGO_URL
+              value: "mongodb://mongo-service:27017/auth"
+
 ---
 apiVersion: v1
 kind: Service

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://ticket-mongo-service:27017/ticket");
+    await mongoose.connect(process.env.MONGO_URL);
 
     console.log("MongoDB Connected for tickets");
   } catch (error) {
