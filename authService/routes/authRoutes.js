@@ -18,6 +18,28 @@ router.get("/user/all", async (req, res) => {
   res.json(users);
 });
 
+router.get("/current-user", async (req, res) => {
+  try {
+    const token = req.cookies.jwt;
+
+    if (!token) {
+      return res.status(401).json({
+        user: null,
+      });
+    }
+
+    const payload = jwt.verify(token, JWT_SECRET);
+
+    res.json({
+      user: payload,
+    });
+  } catch {
+    res.status(401).json({
+      user: null,
+    });
+  }
+});
+
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -72,7 +94,7 @@ router.post("/signin", async (req, res) => {
         message: "Invalid credentials",
       });
     }
-
+    console.log("JWT_SECRET", JWT_SECRET);
     const token = jwt.sign(
       {
         userId: user._id,
@@ -84,15 +106,27 @@ router.post("/signin", async (req, res) => {
       },
     );
 
+    res.cookie("jwt", token, {
+      httpOnly: false,
+      sameSite: "lax",
+    });
+
     res.json({
-      userId: user._id,
-      token,
+      message: "Login successful",
     });
   } catch (error) {
     res.status(500).json({
       message: error.message,
     });
   }
+});
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("jwt");
+
+  res.json({
+    message: "Logged out",
+  });
 });
 
 module.exports = router;
