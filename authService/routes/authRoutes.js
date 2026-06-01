@@ -107,7 +107,7 @@ router.post("/signin", async (req, res) => {
     );
 
     res.cookie("jwt", token, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: "lax",
     });
 
