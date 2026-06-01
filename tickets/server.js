@@ -2,12 +2,12 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
-// const connectDB = require("./config/db");
+const connectDB = require("./config/db");
 const ticketRoutes = require("./routes/ticketRoutes");
 
 const app = express();
 
-// connectDB();
+connectDB();
 
 app.use(express.json());
 app.use(cookieParser());
