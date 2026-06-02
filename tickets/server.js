@@ -4,17 +4,32 @@ const cookieParser = require("cookie-parser");
 
 const connectDB = require("./config/db");
 const ticketRoutes = require("./routes/ticketRoutes");
+const natsWrapper = require("./nats-wrapper");
 
 const app = express();
 
-connectDB();
+const start = async () => {
+  try {
+    await natsWrapper.connect(
+      "ticketing",
+      "ticket-service-new",
+      "http://nats-service:4222",
+    );
 
-app.use(express.json());
-app.use(cookieParser());
-app.use(morgan("dev"));
+    await connectDB();
 
-app.use("/api/tickets", ticketRoutes);
+    app.use(express.json());
+    app.use(cookieParser());
+    app.use(morgan("dev"));
 
-app.listen(3000, () => {
-  console.log("Ticket Server running on port 3000");
-});
+    app.use("/api/tickets", ticketRoutes);
+
+    app.listen(3000, () => {
+      console.log("Ticket Server running on port 3000");
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+start();

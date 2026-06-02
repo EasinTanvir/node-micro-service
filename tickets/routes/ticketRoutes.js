@@ -2,7 +2,8 @@ const express = require("express");
 const Ticket = require("../models/Ticket");
 const router = express.Router();
 const protectRoute = require("../middlewares/protectRoute");
-
+const natsWrapper = require("../nats-wrapper");
+const Subjects = require("../events/publisher/subjects");
 // Get all tickets of current user
 router.get("/", protectRoute, async (req, res) => {
   try {
@@ -60,6 +61,19 @@ router.post("/create", protectRoute, async (req, res) => {
       price,
       userId: req.user.id,
     });
+
+    natsWrapper.client.publish(
+      Subjects.TICKET_CREATED,
+      JSON.stringify({
+        id: ticket._id,
+        title: ticket.title,
+        price: ticket.price,
+        userId: ticket.userId,
+      }),
+      () => {
+        console.log("Ticket Created Event Published");
+      },
+    );
 
     res.status(201).json({
       message: "Ticket created successfully",
