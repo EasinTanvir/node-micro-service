@@ -8,12 +8,23 @@ const stan = nats.connect("ticketing", randomBytes(4).toString("hex"), {
 stan.on("connect", () => {
   console.log("Listener connected to NATS");
 
+  const options = stan
+    .subscriptionOptions()
+    .setManualAckMode(true)
+    .setDeliverAllAvailable()
+    .setDurableName("order-service-durable");
+  // this is durable subscription confirm that list of event that process
+  // or not if not process yet it will continue when the service is online
+
   const subscription = stan.subscribe(
     "ticket:created",
     "order-service-queue-group",
+    options,
   );
 
   subscription.on("message", (msg) => {
+    console.log("Seq No:", msg.getSequence());
     console.log("Received Event:", msg.getData());
+    msg.ack();
   });
 });
