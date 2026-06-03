@@ -11,9 +11,9 @@ const app = express();
 const start = async () => {
   try {
     await natsWrapper.connect(
-      "ticketing",
-      "ticket-service-new",
-      "http://nats-service:4222",
+      process.env.CLUSTER_ID,
+      process.env.CLIENT_ID,
+      process.env.NATS_URL,
     );
 
     natsWrapper.client.on("close", () => {
