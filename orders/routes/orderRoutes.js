@@ -1,18 +1,19 @@
 const express = require("express");
 const Ticket = require("../models/Ticket");
+const Order = require("../models/Order");
 const router = express.Router();
 const protectRoute = require("../middlewares/protectRoute");
 const natsWrapper = require("../nats-wrapper");
 const Subjects = require("../events/publisher/subjects");
-// Get all tickets of current user
+// Get all orders of current user
 router.get("/", protectRoute, async (req, res) => {
   try {
-    const tickets = await Ticket.find({
+    const orders = await Order.find({
       userId: req.user.id,
-    });
+    }).populate("ticket");
 
     res.json({
-      tickets,
+      orders,
     });
   } catch (error) {
     res.status(500).json({
@@ -21,22 +22,25 @@ router.get("/", protectRoute, async (req, res) => {
   }
 });
 
-// Get single ticket
+// Get single order
 router.get("/:id", protectRoute, async (req, res) => {
   try {
-    const ticket = await Ticket.findOne({
-      _id: req.params.id,
-      userId: req.user.id,
-    });
+    const order = await Order.findById(req.params.id).populate("ticket");
 
-    if (!ticket) {
+    if (!order) {
       return res.status(404).json({
-        message: "Ticket not found",
+        message: "Order not found",
+      });
+    }
+
+    if (order.userId !== req.user.id) {
+      return res.status(401).json({
+        message: "Not authorized to view this order",
       });
     }
 
     res.json({
-      ticket,
+      order,
     });
   } catch (error) {
     res.status(500).json({
@@ -45,65 +49,12 @@ router.get("/:id", protectRoute, async (req, res) => {
   }
 });
 
-// Create ticket
+// Create order
 router.post("/create", protectRoute, async (req, res) => {
   try {
-    const { title, price } = req.body;
+    const { ticketId } = req.body;
 
-    if (!title || price === undefined) {
-      return res.status(400).json({
-        message: "Title and Price are required",
-      });
-    }
-
-    const ticket = await Ticket.create({
-      title,
-      price,
-      userId: req.user.id,
-    });
-
-    natsWrapper.client.publish(
-      Subjects.TICKET_CREATED,
-      JSON.stringify({
-        id: ticket._id,
-        title: ticket.title,
-        price: ticket.price,
-        userId: ticket.userId,
-      }),
-      () => {
-        console.log("Ticket Created Event Published");
-      },
-    );
-
-    res.status(201).json({
-      message: "Ticket created successfully",
-      ticket,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
-
-// Update ticket
-router.put("/:id", protectRoute, async (req, res) => {
-  try {
-    const { title, price } = req.body;
-
-    const ticket = await Ticket.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        userId: req.user.id,
-      },
-      {
-        title,
-        price,
-      },
-      {
-        new: true,
-      },
-    );
+    const ticket = await Ticket.findById(ticketId);
 
     if (!ticket) {
       return res.status(404).json({
@@ -111,22 +62,47 @@ router.put("/:id", protectRoute, async (req, res) => {
       });
     }
 
-    natsWrapper.client.publish(
-      Subjects.TICKET_UPDATED,
-      JSON.stringify({
-        id: ticket._id,
-        title: ticket.title,
-        price: ticket.price,
-        userId: ticket.userId,
-      }),
-      () => {
-        console.log("Ticket Updated Event Published");
+    // check that ticket already reserved or not
+    const existingOrder = await Order.findOne({
+      ticket: ticket,
+      status: {
+        $in: ["created", "awaiting:payment", "complete"],
       },
-    );
+    });
 
-    res.json({
-      message: "Ticket updated successfully",
+    if (existingOrder) {
+      return res.status(400).json({
+        message: "Ticket is already reserved",
+      });
+    }
+
+    // expire after 15 minutes
+    const expiration = new Date();
+    expiration.setSeconds(expiration.getSeconds() + 15 * 60);
+
+    const order = await Order.create({
+      userId: req.user.id,
+      status: "created",
+      expiresAt: expiration,
       ticket,
+    });
+
+    // natsWrapper.client.publish(
+    //   Subjects.TICKET_CREATED,
+    //   JSON.stringify({
+    //     id: ticket._id,
+    //     title: ticket.title,
+    //     price: ticket.price,
+    //     userId: ticket.userId,
+    //   }),
+    //   () => {
+    //     console.log("Ticket Created Event Published");
+    //   },
+    // );
+
+    res.status(201).json({
+      message: "order created successfully",
+      order,
     });
   } catch (error) {
     res.status(500).json({
@@ -138,19 +114,25 @@ router.put("/:id", protectRoute, async (req, res) => {
 // Delete ticket
 router.delete("/:id", protectRoute, async (req, res) => {
   try {
-    const ticket = await Ticket.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id,
-    });
+    const order = await Order.findById(req.params.id);
 
-    if (!ticket) {
+    if (!order) {
       return res.status(404).json({
-        message: "Ticket not found",
+        message: "Order not found",
       });
     }
 
+    if (order.userId !== req.user.id) {
+      return res.status(401).json({
+        message: "Not authorized to cancel this order",
+      });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
     res.json({
-      message: "Ticket deleted successfully",
+      message: "Order cancelled successfully",
     });
   } catch (error) {
     res.status(500).json({

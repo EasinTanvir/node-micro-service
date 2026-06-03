@@ -11,11 +11,6 @@ const ticketSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-
-    userId: {
-      type: String,
-      required: true,
-    },
   },
   {
     timestamps: true,
