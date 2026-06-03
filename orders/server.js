@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const orderRoutes = require("./routes/orderRoutes");
 const natsWrapper = require("./nats-wrapper");
+const TicketCreatedListener = require("./events/listners/ticket-created-listener");
+const TicketUpdatedListener = require("./events/listners/ticket-updated-listener");
 
 const app = express();
 
@@ -15,6 +17,9 @@ const start = async () => {
       process.env.CLIENT_ID,
       process.env.NATS_URL,
     );
+
+    new TicketCreatedListener().listen();
+    new TicketUpdatedListener().listen();
 
     natsWrapper.client.on("close", () => {
       console.log("NATS connection closed");
