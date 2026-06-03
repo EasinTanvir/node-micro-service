@@ -87,18 +87,22 @@ router.post("/create", protectRoute, async (req, res) => {
       ticket,
     });
 
-    // natsWrapper.client.publish(
-    //   Subjects.TICKET_CREATED,
-    //   JSON.stringify({
-    //     id: ticket._id,
-    //     title: ticket.title,
-    //     price: ticket.price,
-    //     userId: ticket.userId,
-    //   }),
-    //   () => {
-    //     console.log("Ticket Created Event Published");
-    //   },
-    // );
+    natsWrapper.client.publish(
+      Subjects.ORDER_CREATED,
+      JSON.stringify({
+        id: order.id,
+        status: order.status,
+        userId: order.userId,
+        expiresAt: order.expiresAt.toISOString(),
+        ticket: {
+          id: ticket.id,
+          price: ticket.price,
+        },
+      }),
+      () => {
+        console.log("Order Created Event Published");
+      },
+    );
 
     res.status(201).json({
       message: "order created successfully",
@@ -114,7 +118,7 @@ router.post("/create", protectRoute, async (req, res) => {
 // Delete ticket
 router.delete("/:id", protectRoute, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("ticket");
 
     if (!order) {
       return res.status(404).json({
@@ -130,6 +134,19 @@ router.delete("/:id", protectRoute, async (req, res) => {
 
     order.status = "cancelled";
     await order.save();
+
+    natsWrapper.client.publish(
+      Subjects.ORDER_CANCELLED,
+      JSON.stringify({
+        id: order.id,
+        ticket: {
+          id: order.ticket.id,
+        },
+      }),
+      () => {
+        console.log("Order Cancelled Event Published");
+      },
+    );
 
     res.json({
       message: "Order cancelled successfully",
