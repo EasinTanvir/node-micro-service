@@ -2,35 +2,39 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
-// const connectDB = require("./config/db");
-// const ticketRoutes = require("./routes/ticketRoutes");
-// const natsWrapper = require("./nats-wrapper");
+const connectDB = require("./config/db");
+const orderRoutes = require("./routes/orderRoutes");
+const natsWrapper = require("./nats-wrapper");
 
 const app = express();
 
 const start = async () => {
   try {
-    // await natsWrapper.connect(
-    //   process.env.CLUSTER_ID,
-    //   process.env.CLIENT_ID,
-    //   process.env.NATS_URL,
-    // );
+    await natsWrapper.connect(
+      process.env.CLUSTER_ID,
+      process.env.CLIENT_ID,
+      process.env.NATS_URL,
+    );
 
-    // natsWrapper.client.on("close", () => {
-    //   console.log("NATS connection closed");
-    //   process.exit();
-    // });
+    natsWrapper.client.on("close", () => {
+      console.log("NATS connection closed");
+      process.exit();
+    });
 
-    // process.on("SIGINT", () => natsWrapper.client.close());
-    // process.on("SIGTERM", () => natsWrapper.client.close());
+    process.on("SIGINT", () => natsWrapper.client.close());
+    process.on("SIGTERM", () => natsWrapper.client.close());
 
-    // await connectDB();
+    await connectDB();
 
     app.use(express.json());
     app.use(cookieParser());
     app.use(morgan("dev"));
 
-    // app.use("/api/tickets", ticketRoutes);
+    app.use("/api/orders/test", (req, res) => {
+      res.send("Hello from the test endpoint!");
+    });
+
+    app.use("/api/orders", orderRoutes);
 
     app.listen(3000, () => {
       console.log("Order Server running on port 3000");
