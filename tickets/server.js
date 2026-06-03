@@ -16,6 +16,14 @@ const start = async () => {
       "http://nats-service:4222",
     );
 
+    natsWrapper.client.on("close", () => {
+      console.log("NATS connection closed");
+      process.exit();
+    });
+
+    process.on("SIGINT", () => natsWrapper.client.close());
+    process.on("SIGTERM", () => natsWrapper.client.close());
+
     await connectDB();
 
     app.use(express.json());

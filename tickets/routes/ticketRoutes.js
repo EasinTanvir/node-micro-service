@@ -111,6 +111,19 @@ router.put("/:id", protectRoute, async (req, res) => {
       });
     }
 
+    natsWrapper.client.publish(
+      Subjects.TICKET_UPDATED,
+      JSON.stringify({
+        id: ticket._id,
+        title: ticket.title,
+        price: ticket.price,
+        userId: ticket.userId,
+      }),
+      () => {
+        console.log("Ticket Updated Event Published");
+      },
+    );
+
     res.json({
       message: "Ticket updated successfully",
       ticket,
