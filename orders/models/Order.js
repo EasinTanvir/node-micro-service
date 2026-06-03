@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { updateIfCurrentPlugin } = require("@etomon/mongoose-update-if-current");
 
 const orderSchema = new mongoose.Schema(
   {
@@ -29,5 +30,6 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
+orderSchema.set("versionKey", "version");
+orderSchema.plugin(updateIfCurrentPlugin);
 module.exports = mongoose.model("Order", orderSchema);
