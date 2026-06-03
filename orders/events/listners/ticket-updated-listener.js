@@ -24,7 +24,11 @@ class TicketUpdatedListener {
 
         console.log("[TicketUpdated] Received event:", data);
 
-        const ticket = await Ticket.findById(data.id);
+        // concurrency control
+        const ticket = await Ticket.findOne({
+          _id: data.id,
+          version: data.version - 1,
+        });
 
         if (!ticket) {
           throw new Error(`Ticket ${data.id} not found`);

@@ -69,6 +69,7 @@ router.post("/create", protectRoute, async (req, res) => {
         title: ticket.title,
         price: ticket.price,
         userId: ticket.userId,
+        version: ticket.version,
       }),
       () => {
         console.log("Ticket Created Event Published");
@@ -118,6 +119,7 @@ router.put("/:id", protectRoute, async (req, res) => {
         title: ticket.title,
         price: ticket.price,
         userId: ticket.userId,
+        version: ticket.version,
       }),
       () => {
         console.log("Ticket Updated Event Published");
