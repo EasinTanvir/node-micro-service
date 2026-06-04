@@ -3,8 +3,8 @@ const Ticket = require("../models/Ticket");
 const Order = require("../models/Order");
 const router = express.Router();
 const protectRoute = require("../middlewares/protectRoute");
-const natsWrapper = require("../nats-wrapper");
-const Subjects = require("../events/publisher/subjects");
+const OrderCreatedPublisher = require("../events/publisher/order-created-publisher");
+const OrderCancelledPublisher = require("../events/publisher/order-cancelled-publisher");
 // Get all orders of current user
 router.get("/", protectRoute, async (req, res) => {
   try {
@@ -87,22 +87,7 @@ router.post("/create", protectRoute, async (req, res) => {
       ticket,
     });
 
-    natsWrapper.client.publish(
-      Subjects.ORDER_CREATED,
-      JSON.stringify({
-        id: order.id,
-        status: order.status,
-        userId: order.userId,
-        expiresAt: order.expiresAt.toISOString(),
-        ticket: {
-          id: ticket.id,
-          price: ticket.price,
-        },
-      }),
-      () => {
-        console.log("Order Created Event Published");
-      },
-    );
+    new OrderCreatedPublisher().publish(order, ticket);
 
     res.status(201).json({
       message: "order created successfully",
@@ -135,18 +120,7 @@ router.delete("/:id", protectRoute, async (req, res) => {
     order.status = "cancelled";
     await order.save();
 
-    natsWrapper.client.publish(
-      Subjects.ORDER_CANCELLED,
-      JSON.stringify({
-        id: order.id,
-        ticket: {
-          id: order.ticket.id,
-        },
-      }),
-      () => {
-        console.log("Order Cancelled Event Published");
-      },
-    );
+    new OrderCancelledPublisher().publish(order);
 
     res.json({
       message: "Order cancelled successfully",

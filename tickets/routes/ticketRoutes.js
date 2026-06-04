@@ -2,8 +2,8 @@ const express = require("express");
 const Ticket = require("../models/Ticket");
 const router = express.Router();
 const protectRoute = require("../middlewares/protectRoute");
-const natsWrapper = require("../nats-wrapper");
-const Subjects = require("../events/publisher/subjects");
+const TicketCreatedPublisher = require("../events/publisher/ticket-created-publisher");
+const TicketUpdatedPublisher = require("../events/publisher/ticket-updated-publisher");
 // Get all tickets of current user
 router.get("/", protectRoute, async (req, res) => {
   try {
@@ -62,20 +62,7 @@ router.post("/create", protectRoute, async (req, res) => {
       userId: req.user.id,
     });
 
-    natsWrapper.client.publish(
-      Subjects.TICKET_CREATED,
-      JSON.stringify({
-        id: ticket._id,
-        title: ticket.title,
-        price: ticket.price,
-        userId: ticket.userId,
-        version: ticket.version,
-      }),
-      () => {
-        console.log("Ticket Created Event Published");
-      },
-    );
-
+    new TicketCreatedPublisher().publish(ticket);
     res.status(201).json({
       message: "Ticket created successfully",
       ticket,
@@ -117,19 +104,7 @@ router.put("/:id", protectRoute, async (req, res) => {
 
     await ticket.save();
 
-    natsWrapper.client.publish(
-      Subjects.TICKET_UPDATED,
-      JSON.stringify({
-        id: ticket.id,
-        title: ticket.title,
-        price: ticket.price,
-        userId: ticket.userId,
-        version: ticket.version,
-      }),
-      () => {
-        console.log("Ticket Updated Event Published");
-      },
-    );
+    new TicketUpdatedPublisher().publish(ticket);
 
     res.json({
       message: "Ticket updated successfully",

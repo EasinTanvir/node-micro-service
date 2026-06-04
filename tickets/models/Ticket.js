@@ -1,31 +1,19 @@
 const mongoose = require("mongoose");
-const { updateIfCurrentPlugin } = require("@etomon/mongoose-update-if-current");
 
 const ticketSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-
-    price: {
-      type: Number,
-      required: true,
-    },
-
-    userId: {
-      type: String,
-      required: true,
-    },
-    orderId: {
-      type: String,
-    },
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    userId: { type: String, required: true },
+    orderId: { type: String },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
+
 ticketSchema.set("versionKey", "version");
-ticketSchema.plugin(updateIfCurrentPlugin);
+
+ticketSchema.pre("save", function () {
+  this.increment();
+});
 
 module.exports = mongoose.model("Ticket", ticketSchema);
