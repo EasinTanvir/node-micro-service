@@ -92,19 +92,10 @@ router.put("/:id", protectRoute, async (req, res) => {
   try {
     const { title, price } = req.body;
 
-    const ticket = await Ticket.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        userId: req.user.id,
-      },
-      {
-        title,
-        price,
-      },
-      {
-        new: true,
-      },
-    );
+    const ticket = await Ticket.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
 
     if (!ticket) {
       return res.status(404).json({
@@ -112,10 +103,24 @@ router.put("/:id", protectRoute, async (req, res) => {
       });
     }
 
+    // prevent updates if ticket is reserved
+    if (ticket.orderId) {
+      return res.status(400).json({
+        message: "Cannot edit a reserved ticket",
+      });
+    }
+
+    ticket.set({
+      title,
+      price,
+    });
+
+    await ticket.save();
+
     natsWrapper.client.publish(
       Subjects.TICKET_UPDATED,
       JSON.stringify({
-        id: ticket._id,
+        id: ticket.id,
         title: ticket.title,
         price: ticket.price,
         userId: ticket.userId,

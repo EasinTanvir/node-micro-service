@@ -6,6 +6,9 @@ const connectDB = require("./config/db");
 const ticketRoutes = require("./routes/ticketRoutes");
 const natsWrapper = require("./nats-wrapper");
 
+const OrderCancelledListener = require("./events/listners/order-cancelled-listener");
+const OrderCreatedListener = require("./events/listners/order-created-listner");
+
 const app = express();
 
 const start = async () => {
@@ -15,6 +18,9 @@ const start = async () => {
       process.env.CLIENT_ID,
       process.env.NATS_URL,
     );
+
+    new OrderCancelledListener().listen();
+    new OrderCreatedListener().listen();
 
     natsWrapper.client.on("close", () => {
       console.log("NATS connection closed");
